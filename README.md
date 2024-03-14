@@ -10,4 +10,4 @@ test_vector_store()
 >>>
 ```
 
-The (very) compact [code](vecstore) is self-explanatory.
+The (very) compact [code](https://github.com/ptarau/vecstore/blob/main/vecstore/vecstore.py) is self-explanatory.
