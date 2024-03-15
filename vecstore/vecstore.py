@@ -1,4 +1,6 @@
 import math
+from time import time
+from collections import Counter
 import numpy as np
 from hnswlib import Index
 
@@ -12,6 +14,7 @@ class VecStore(Index):
         super().__init__(space=space, dim=dim)
         self.fname = fname
         self.initialized = False
+        self.times=Counter()
 
     def load(self):
         """ loads store content from file named "fname" """
@@ -37,24 +40,27 @@ class VecStore(Index):
         self.initialized = True
 
     def __repr__(self):
-        count=self.element_count
-        size=self.max_elements
+        count = self.element_count
+        size = self.max_elements
         return f"VecSore(at:{self.fname},dim:{self.dim},has:{count}/{size})"
 
     def add(self, xss):
         """
         adds numpy array of numpy vectors to store
         """
+        t1=time()
         self.init()
         if isinstance(xss, list): xss = np.array(xss)
-        #print('!!! add xss:',len(xss[0]))
-        assert xss.shape[1] == self.dim,f"shape: {xss.shape[1]}, dim: {self.dim}"
+
+        assert xss.shape[1] == self.dim, f"shape: {xss.shape[1]}, dim: {self.dim}"
         N = xss.shape[0]
         N += self.element_count
         if N > self.max_elements:
             N = max(2 * self.max_elements, 2 ** math.ceil(math.log2(N)))
             self.resize_index(N)
         self.add_items(xss)
+        t2=time()
+        self.times['add']+=(t2-t1)
 
     def ids(self):
         """
@@ -79,23 +85,31 @@ class VecStore(Index):
          for each numpy vector (ok also in list form) in qss
         """
         assert isinstance(k, int)
+
         if isinstance(qss, list): qss = np.array(qss)
         distss, vect_idss = self.knn_query(qss, k, filter=None)
+
         return distss, vect_idss
 
     def query_one(self, qs, k=3):
         """
         returns knns for given k as pairss of (vector id,score)
         """
+        t1 = time()
         dists, vect_ids = self.query([qs], k=k)
-        return list(zip(dists[0], vect_ids[0]))
+        res= list(zip(dists[0], vect_ids[0]))
+        t2 = time()
+        self.times['query_one'] += (t2 - t1)
+        return res
 
     def all_knns(self, k=3, as_weights=True):
         """
         computes k id,dist for all vectors in the store
         """
+        t1=time()
         k += 1  # as we drove knn to itself
         xss = self.vecs()
+
         vect_idss, vect_distss = self.query(xss, k=k)
         pairss = []
         for i, ids in enumerate(vect_idss):
@@ -105,10 +119,11 @@ class VecStore(Index):
                 if i == j: continue
                 d = dists[k]
                 if as_weights: d = 1 - d
-                pair = j, d
+                pair = int(j), float(d)
                 pairs.append(pair)
             pairss.append(pairs)
-
+        t2 = time()
+        self.times['all_knns'] += (t2 - t1)
         return pairss
 
 
@@ -154,13 +169,15 @@ def test_vecstore():
     r = vs_.query_one(qs)
     print()
     print(r)
+    print('TIMES:',vs.times)
 
     ps = vs_.all_knns()
     print('\nKNN PAIRS:')
     for p in ps:
         print(p)
 
-    print('STORE:',vs_)
+    print('\nSTORE:', vs_)
+    print('TIMES:', vs_.times)
 
 
 if __name__ == "__main__":
