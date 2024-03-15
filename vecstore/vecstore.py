@@ -42,7 +42,8 @@ class VecStore(Index):
         """
         self.init()
         if isinstance(xss, list): xss = np.array(xss)
-        assert xss.shape[1] == self.dim
+        #print('!!! add xss:',len(xss[0]))
+        assert xss.shape[1] == self.dim,f"shape: {xss.shape[1]}, dim: {self.dim}"
         N = xss.shape[0]
         N += self.element_count
         if N > self.max_elements:
