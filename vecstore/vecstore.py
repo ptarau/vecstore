@@ -36,6 +36,11 @@ class VecStore(Index):
         self.set_num_threads(8)
         self.initialized = True
 
+    def __repr__(self):
+        count=self.element_count
+        size=self.max_elements
+        return f"VecSore(at:{self.fname},dim:{self.dim},has:{count}/{size})"
+
     def add(self, xss):
         """
         adds numpy array of numpy vectors to store
@@ -154,6 +159,8 @@ def test_vecstore():
     print('\nKNN PAIRS:')
     for p in ps:
         print(p)
+
+    print('STORE:',vs_)
 
 
 if __name__ == "__main__":
