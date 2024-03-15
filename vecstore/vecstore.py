@@ -84,7 +84,7 @@ class VecStore(Index):
         dists, vect_ids = self.query([qs], k=k)
         return list(zip(dists[0], vect_ids[0]))
 
-    def knns(self, k=3, as_weights=True):
+    def all_knns(self, k=3, as_weights=True):
         """
         computes k id,dist for all vectors in the store
         """
@@ -149,7 +149,7 @@ def test_vecstore():
     print()
     print(r)
 
-    ps = vs_.knns()
+    ps = vs_.all_knns()
     print('\nKNN PAIRS:')
     for p in ps:
         print(p)
