@@ -23,7 +23,7 @@ class VecStore(Index):
 
     def init(self, N=1024):
         """
-        initializes store to default paprameters
+        initializes store to default parameters
         and max_elements=N
         """
         if self.initialized: return
@@ -41,7 +41,7 @@ class VecStore(Index):
         adds numpy array of numpy vectors to store
         """
         self.init()
-        if isinstance(xss,list): xss=np.array(xss)
+        if isinstance(xss, list): xss = np.array(xss)
         assert xss.shape[1] == self.dim
         N = xss.shape[0]
         N += self.element_count
@@ -63,7 +63,7 @@ class VecStore(Index):
         return_type = 'list' if as_list else 'numpy'
         return self.get_items(self.ids(), return_type=return_type)
 
-    def delete(self,i):
+    def delete(self, i):
         """ deletes vector of id=i from the store """
         self.mark_deleted(i)
 
@@ -74,42 +74,85 @@ class VecStore(Index):
         """
         assert isinstance(k, int)
         if isinstance(qss, list): qss = np.array(qss)
-        distss,vect_idss = self.knn_query(qss, k, filter=None)
-        return distss,vect_idss
+        distss, vect_idss = self.knn_query(qss, k, filter=None)
+        return distss, vect_idss
 
-    def query_one(self,qs,k=3):
+    def query_one(self, qs, k=3):
         """
-        returns knn for given k as pair of (scores,vector ids)
+        returns knns for given k as pairss of (vector id,score)
         """
-        dists,vect_ids=self.query([qs],k=k)
-        return dists[0],vect_ids[0]
+        dists, vect_ids = self.query([qs], k=k)
+        return list(zip(dists[0], vect_ids[0]))
+
+    def knns(self, k=3, as_weights=True):
+        """
+        computes k id,dist for all vectors in the store
+        """
+        k += 1  # as we drove knn to itself
+        xss = self.vecs()
+        vect_idss, vect_distss = self.query(xss, k=k)
+        pairss = []
+        for i, ids in enumerate(vect_idss):
+            dists = vect_distss[i]
+            pairs = []
+            for k, j in enumerate(ids):
+                if i == j: continue
+                d = dists[k]
+                if as_weights: d = 1 - d
+                pair = j, d
+                pairs.append(pair)
+            pairss.append(pairs)
+
+        return pairss
+
+
+def normarr(xss):
+    """
+    normalizes an array - just for testing
+    """
+    xss = np.array(xss)
+    return xss / np.linalg.norm(xss)
+
 
 def test_vecstore():
     """
     simple test of all operations excpe delete
     """
     vs = VecStore('temp.bin', dim=3)
-    xss = [[11, 22, 33], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
+    xss = [[0.1, 0.2, 0.2], [11, 0.22, 33], [4, 5, 6], [7, 8, 0.9], [0.10, 11, 12]]
     yss = [[1, 2, 3], [30, 40, 50]]
     qs = [7, 8, 9]
-    #xss = np.array(xss)
-    yss = np.array(yss)
-    #qss = np.array(qss)
+    print(xss)
+    print()
+
+    print(yss)
+    print()
+
     print(qs)
+    print()
+
+    x = normarr([0.33333334, 0.6666667, 0.6666667])
+    print('norm arr:', x)
+
+    # qs = normarr(qs)
 
     vs.add(xss)
     vs.add(yss)
 
-    print('IDS:\n',vs.ids())
-    print('VECS:\n',vs.vecs())
+    print('IDS:\n', vs.ids())
+    print('\nVECS:\n', vs.vecs())
 
     vs.save()
     vs_ = VecStore('temp.bin', dim=3)
     vs_.load()
     r = vs_.query_one(qs)
     print()
-    print(r[0])
-    print(r[1])
+    print(r)
+
+    ps = vs_.knns()
+    print('\nKNN PAIRS:')
+    for p in ps:
+        print(p)
 
 
 if __name__ == "__main__":
