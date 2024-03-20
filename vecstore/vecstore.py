@@ -19,6 +19,7 @@ class VecStore(Index):
     def load(self):
         """ loads store content from file named "fname" """
         self.load_index(self.fname)
+        self.initialized = True
 
     def save(self):
         """ saves store content to file named "fname" """
@@ -40,6 +41,7 @@ class VecStore(Index):
         self.initialized = True
 
     def __repr__(self):
+        assert self.initialized
         count = self.element_count
         size = self.max_elements
         return f"VecSore(at:{self.fname},dim:{self.dim},has:{count}/{size})"
@@ -72,11 +74,13 @@ class VecStore(Index):
         """
         returns the list or numpy array of vectors in the store
         """
+        assert self.initialized
         return_type = 'list' if as_list else 'numpy'
         return self.get_items(self.ids(), return_type=return_type)
 
     def delete(self, i):
         """ deletes vector of id=i from the store """
+        assert self.initialized
         self.mark_deleted(i)
 
     def query(self, qss, k=3):
@@ -84,6 +88,7 @@ class VecStore(Index):
          returns ids and knn similarity scores for k neares neightbor
          for each numpy vector (ok also in list form) in qss
         """
+        assert self.initialized
         assert isinstance(k, int)
 
         if isinstance(qss, list): qss = np.array(qss)
@@ -96,6 +101,7 @@ class VecStore(Index):
         returns knns for given k as pairss of (vector id,score)
         """
         t1 = time()
+        assert self.initialized
         dists, vect_ids = self.query([qs], k=k)
         res= list(zip(dists[0], vect_ids[0]))
         t2 = time()
@@ -107,6 +113,7 @@ class VecStore(Index):
         computes k id,dist for all vectors in the store
         """
         t1=time()
+        assert self.initialized
         k += 1  # as we drove knn to itself
         xss = self.vecs()
 
