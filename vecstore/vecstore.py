@@ -124,9 +124,10 @@ class VecStore(Index):
             pairs = []
             for k, j in enumerate(ids):
                 if i == j: continue
-                d = dists[k]
-                if as_weights: d = 1 - d
-                pair = int(j), float(d)
+                d = float(dists[k])
+                if as_weights:
+                    d = 1 - d
+                pair = int(j), d
                 pairs.append(pair)
             pairss.append(pairs)
         t2 = time()
