@@ -32,11 +32,11 @@ class VecStore(Index):
         """
         if self.initialized: return
         self.init_index(max_elements=N,
-                        ef_construction=100,
+                        ef_construction=200,
                         M=64,
                         allow_replace_deleted=True
                         )
-        self.set_ef(20)
+        self.set_ef(100)
         self.set_num_threads(8)
         self.initialized = True
 
