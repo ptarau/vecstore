@@ -13,7 +13,7 @@ class VecStore(Index):
         """
         super().__init__(space=space, dim=dim)
         self.fname = fname
-        self.dim=dim
+        self.store_dim=dim
         self.initialized = False
         self.times=Counter()
 
